@@ -29,6 +29,13 @@ var lower_hook1, lower_hook2, lower_hook3, lower_hook4
 var hooktip1, hooktip2, hooktip3, hooktip4
 var cable1, cable2, crane_cable
 
+var container_base_geometry, container_side1_geometry, container_side2_geometry, container_side3_geometry, container_side4_geometry
+var object1_geometry, object2_geometry, object3_geometry, object4_geometry, object5_geometry
+
+var container_base_material, container_side_material, object_material
+
+var container_base, container_side1, container_side2, container_side3, container_side4
+var object1, object2, object3, object4, object5
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -48,7 +55,7 @@ function createScene(){
 function createCameras(){
     'use strict';
     frontalCamera = new THREE.OrthographicCamera(-70, 70, 70, -5, 1, 100);
-    frontalCamera.position.set(0, 0, 20);
+    frontalCamera.position.set(0, 0, 100);
     frontalCamera.lookAt(scene.position);
 
     lateralCamera = new THREE.OrthographicCamera(-70, 70, 70, -5, 1, 100);
@@ -243,6 +250,80 @@ function createCrane(){
     scene.add(hooktip4);
 }
 
+function createContainer(){
+    'use strict';
+
+    container_base_material = new THREE.MeshBasicMaterial({color: 'Lime'});
+    container_side_material = new THREE.MeshBasicMaterial({color: 'Green'});
+
+    container_base_geometry = new THREE.BoxGeometry(3, 0.2, 3);
+    container_base = new THREE.Mesh(container_base_geometry, container_base_material);
+    container_base.position.set(30, 0.1, 6);
+    container_base.rotation.set(0, 0, 0);
+    scene.add(container_base);
+
+    container_side1_geometry = new THREE.BoxGeometry(4, 2, 0.5);
+    container_side1 = new THREE.Mesh(container_side1_geometry, container_side_material);
+    container_side1.position.set(30, 1, 7.75);
+    container_side1.rotation.set(0, 0, 0);
+    scene.add(container_side1);
+    
+    container_side2_geometry = new THREE.BoxGeometry(0.5, 2, 4);
+    container_side2 = new THREE.Mesh(container_side2_geometry, container_side_material);
+    container_side2.position.set(28.25, 1, 6);
+    container_side2.rotation.set(0, 0, 0);
+    scene.add(container_side2);
+
+    container_side3_geometry = new THREE.BoxGeometry(4, 2, 0.5);
+    container_side3 = new THREE.Mesh(container_side3_geometry, container_side_material);
+    container_side3.position.set(30, 1, 4.25);
+    container_side3.rotation.set(0, 0, 0);
+    scene.add(container_side3);
+
+    container_side4_geometry = new THREE.BoxGeometry(0.5, 2, 4);
+    container_side4 = new THREE.Mesh(container_side4_geometry, container_side_material);
+    container_side4.position.set(31.75, 1, 6);
+    container_side4.rotation.set(0, 0, 0);
+    scene.add(container_side4);
+
+}
+
+function createObjects() {
+    'use strict';
+
+    object_material = new THREE.MeshBasicMaterial({color: 'Turquoise'});
+
+    object1_geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+    object1 = new THREE.Mesh(object1_geometry, object_material);
+    object1.position.set(20, 0.5, 20);
+    object1.rotation.set(0, 0, 0);
+    scene.add(object1);
+
+    object2_geometry = new THREE.DodecahedronGeometry(1);
+    object2 = new THREE.Mesh(object2_geometry, object_material);
+    object2.position.set(15, 5, 1);
+    object2.rotation.set(0, 0, 0);
+    scene.add(object2);
+
+    object3_geometry = new THREE.IcosahedronGeometry(1.5);
+    object3 = new THREE.Mesh(object3_geometry, object_material);
+    object3.position.set(40, 3, 5);
+    object3.rotation.set(0, 0, 0);
+    scene.add(object3);
+
+    object4_geometry = new THREE.TorusGeometry(0.9, 0.5, 16, 100);
+    object4 = new THREE.Mesh(object4_geometry, object_material);
+    object4.position.set(-10, 1, 5);
+    object4.rotation.set(1.57, 0, 0);
+    scene.add(object4);
+
+    object5_geometry = new THREE.TorusKnotGeometry(0.8, 0.3, 100, 16);
+    object5 = new THREE.Mesh(object5_geometry, object_material);
+    object5.position.set(6, 0.5, 30);
+    object5.rotation.set(1.57, 0, 0);
+    scene.add(object5);
+}
+
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
@@ -289,8 +370,11 @@ function init() {
     // Create scene and cameras
     createScene();
     createCameras();
-    createCrane();
 
+
+    createCrane();
+    createContainer();
+    createObjects();
 
     render()
 
