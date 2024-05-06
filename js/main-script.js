@@ -12,22 +12,24 @@ var frontalCamera, lateralCamera, topCamera
 var fixOrtogonalCamera, fixPrespectiveCamera, mobileCamera
 var scene, renderer
 
+var currentCamera
+
 
 var base_geometry, mast_geometry, turntable_geometry, cabin_geometry, upper_tower_geometry, tower_peak_geometry
-var jib_geometry, counter_jib_geometry, counterweight_geometry, trolley_geometry, crane_block_geometry
+var jib_geometry, counter_jib_geometry, counterweight_geometry, trolley_geometry, hook_block_geometry
 var upper_hook1_geometry, upper_hook2_geometry, upper_hook3_geometry, upper_hook4_geometry
 var lower_hook1_geometry, lower_hook2_geometry, lower_hook3_geometry, lower_hook4_geometry
 var hooktip1_geometry, hooktip2_geometry, hooktip3_geometry, hooktip4_geometry
-var cable1_geometry, cable2_geometry, crane_cable_geometry
+var cable1_geometry, cable2_geometry, hook_cable_geometry
 
 var base_material, main_material, cabin_material, trolley_material, cable_material, hook_material
 
 var base, mast, turntable, cabin, upper_tower, tower_peak
-var jib, counter_jib, counterweight, trolley, crane_block
+var jib, counter_jib, counterweight, trolley, hook_block
 var upper_hook1, upper_hook2, upper_hook3, upper_hook4
 var lower_hook1, lower_hook2, lower_hook3, lower_hook4
 var hooktip1, hooktip2, hooktip3, hooktip4
-var cable1, cable2, crane_cable
+var cable1, cable2, hook_cable
 
 var container_base_geometry, container_side1_geometry, container_side2_geometry, container_side3_geometry, container_side4_geometry
 var object1_geometry, object2_geometry, object3_geometry, object4_geometry, object5_geometry
@@ -36,6 +38,13 @@ var container_base_material, container_side_material, object_material
 
 var container_base, container_side1, container_side2, container_side3, container_side4
 var object1, object2, object3, object4, object5
+
+var upper_group, trolley_group, hook_group
+var lowhook1_group, lowhook2_group, lowhook3_group, lowhook4_group
+
+var pivot1, pivot2, pivot3, pivot4
+
+var claw_rot
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -54,19 +63,19 @@ function createScene(){
 //////////////////////
 function createCameras(){
     'use strict';
-    frontalCamera = new THREE.OrthographicCamera(-70, 70, 70, -5, 1, 100);
+    frontalCamera = new THREE.OrthographicCamera(-70, 70, 70, -5, 1, 200);
     frontalCamera.position.set(0, 0, 100);
     frontalCamera.lookAt(scene.position);
 
-    lateralCamera = new THREE.OrthographicCamera(-70, 70, 70, -5, 1, 100);
+    lateralCamera = new THREE.OrthographicCamera(-70, 70, 70, -5, 1, 200);
     lateralCamera.position.set(100, 0, 0);
     lateralCamera.lookAt(scene.position);
 
-    topCamera = new THREE.OrthographicCamera(-70, 70, 35, -35, 1, 100);
+    topCamera = new THREE.OrthographicCamera(-70, 70, 35, -35, 1, 200);
     topCamera.position.set(0, 100, 0);
     topCamera.lookAt(scene.position);
 
-    fixOrtogonalCamera = new THREE.OrthographicCamera(-70, 70, 70, -10, 1, 100);
+    fixOrtogonalCamera = new THREE.OrthographicCamera(-70, 70, 70, -10, 1, 200);
     fixOrtogonalCamera.position.set(50, 50, 50);
     fixOrtogonalCamera.lookAt(scene.position);
 
@@ -74,9 +83,11 @@ function createCameras(){
     fixPrespectiveCamera.position.set(50, 80, 50);
     fixPrespectiveCamera.lookAt(scene.position);
 
+    // The mobileCamera uses the turntable as the (0, 0, 0) point
     mobileCamera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    mobileCamera.position.set(30, 30, 6);
-    mobileCamera.lookAt(new THREE.Vector3(30, 0, 6));
+    mobileCamera.position.set(24, -17, 0);
+    mobileCamera.lookAt(new THREE.Vector3(24, -18, 0));
+    
 }
 
 
@@ -111,143 +122,147 @@ function createCrane(){
     turntable.rotation.set(0, 0, 0);
     scene.add(turntable);
 
+    //  Positions of the next obejcts might look weird
+    //  That's because they're using the turntable as the (0,0,0) point
     cabin_geometry = new THREE.BoxGeometry(6, 4, 3);
     cabin= new THREE.Mesh(cabin_geometry, cabin_material);
-    cabin.position.set(7, 46, 6);
+    cabin.position.set(1, 3, 0);
     cabin.rotation.set(0, 0, 0);
     scene.add(cabin);
 
     upper_tower_geometry = new THREE.BoxGeometry(3, 6.5, 3);
     upper_tower = new THREE.Mesh(upper_tower_geometry, main_material);
-    upper_tower.position.set(6, 51.25, 6);
+    upper_tower.position.set(0, 8.25, 0);
     upper_tower.rotation.set(0, 0, 0);
     scene.add(upper_tower);
 
     tower_peak_geometry = new THREE.ConeGeometry(2.12, 3, 4);
     tower_peak = new THREE.Mesh(tower_peak_geometry, main_material);
-    tower_peak.position.set(6, 56, 6);
+    tower_peak.position.set(0, 13, 0);
     tower_peak.rotation.set(0, 0.79, 0);
     scene.add(tower_peak);
 
     jib_geometry = new THREE.BoxGeometry(25, 1.5, 3);
     jib = new THREE.Mesh(jib_geometry, main_material);
-    jib.position.set(20, 48.75, 6);
+    jib.position.set(14, 5.75, 0);
     jib.rotation.set(0, 0, 0);
     scene.add(jib);
 
     counter_jib_geometry = new THREE.BoxGeometry(10, 1.5, 3);
     counter_jib = new THREE.Mesh(counter_jib_geometry, main_material);
-    counter_jib.position.set(-0.5, 48.75, 6);
+    counter_jib.position.set(-6.5, 5.75, 0);
     counter_jib.rotation.set(0, 0, 0);
     scene.add(counter_jib);
     
     counterweight_geometry = new THREE.BoxGeometry(3, 3.01, 2);
     counterweight = new THREE.Mesh(counterweight_geometry, base_material);
-    counterweight.position.set(-2.25, 48, 6);
+    counterweight.position.set(-8.25, 5, 0);
     counterweight.rotation.set(0, 0, 0);
     scene.add(counterweight);
 
     trolley_geometry = new THREE.BoxGeometry(2, 1, 2);
     trolley = new THREE.Mesh(trolley_geometry, trolley_material);
-    trolley.position.set(30, 47.5, 6);
+    trolley.position.set(24, 4.5, 0);
     trolley.rotation.set(0, 0, 0);
     scene.add(trolley);
 
-    crane_block_geometry = new THREE.BoxGeometry(2, 2, 2);
-    crane_block = new THREE.Mesh(crane_block_geometry, hook_material);
-    crane_block.position.set(30, 30, 6);
-    crane_block.rotation.set(0, 0, 0);
-    scene.add(crane_block);
+    hook_block_geometry = new THREE.BoxGeometry(2, 2, 2);
+    hook_block = new THREE.Mesh(hook_block_geometry, hook_material);
+    hook_block.position.set(24, -17, 0);
+    hook_block.rotation.set(0, 0, 0);
+    scene.add(hook_block);
 
-    crane_cable_geometry = new THREE.CylinderGeometry(0.25, 0.25, 16, 32);
-    crane_cable = new THREE.Mesh(crane_cable_geometry, cable_material);
-    crane_cable.position.set(30, 39, 6);
-    crane_cable.rotation.set(0, 0, 0);
-    scene.add(crane_cable);
+    hook_cable_geometry = new THREE.CylinderGeometry(0.25, 0.25, 20, 32);
+    hook_cable = new THREE.Mesh(hook_cable_geometry, cable_material);
+    hook_cable.position.set(24, -6, 0);
+    hook_cable.rotation.set(0, 0, 0);
+    scene.add(hook_cable);
 
     cable1_geometry = new THREE.CylinderGeometry(0.25, 0.25, 10, 32);
     cable1 = new THREE.Mesh(cable1_geometry, cable_material);
-    cable1.position.set(0.1, 51.3, 6);
+    cable1.position.set(-5.9, 8.3, 0);
     cable1.rotation.set(0, 0, -1.15);
     scene.add(cable1);
 
     cable2_geometry = new THREE.CylinderGeometry(0.25, 0.25, 15.6, 32);
     cable2 = new THREE.Mesh(cable2_geometry, cable_material);
-    cable2.position.set(15, 51.3, 6);
+    cable2.position.set(9, 8.3, 0);
     cable2.rotation.set(0, 0, 1.3);
     scene.add(cable2);
 
     upper_hook1_geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
     upper_hook1 = new THREE.Mesh(upper_hook1_geometry, hook_material);
-    upper_hook1.position.set(30, 29.25, 4.75);
+    upper_hook1.position.set(24, -17.75, -1.25);
     upper_hook1.rotation.set(0, 0, 0);
     scene.add(upper_hook1);
 
     upper_hook2_geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
     upper_hook2 = new THREE.Mesh(upper_hook2_geometry, hook_material);
-    upper_hook2.position.set(31.25, 29.25, 6);
+    upper_hook2.position.set(25.25, -17.75, 0);
     upper_hook2.rotation.set(0, 0, 0);
     scene.add(upper_hook2);
 
     upper_hook3_geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
     upper_hook3 = new THREE.Mesh(upper_hook3_geometry, hook_material);
-    upper_hook3.position.set(30, 29.25, 7.25);
+    upper_hook3.position.set(24, -17.75, 1.25);
     upper_hook3.rotation.set(0, 0, 0);
     scene.add(upper_hook3);
 
     upper_hook4_geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
     upper_hook4 = new THREE.Mesh(upper_hook4_geometry, hook_material);
-    upper_hook4.position.set(28.75, 29.25, 6);
+    upper_hook4.position.set(22.75, -17.75, 0);
     upper_hook4.rotation.set(0, 0, 0);
     scene.add(upper_hook4);
 
+    //  The lower parts of the hook use a later defined pivot as the (0, 0, 0) point
     lower_hook1_geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
     lower_hook1 = new THREE.Mesh(lower_hook1_geometry, hook_material);
-    lower_hook1.position.set(30, 28.5, 4.75);
+    lower_hook1.position.set(0, 0, 0);
     lower_hook1.rotation.set(0, 0, 0);
     scene.add(lower_hook1);
 
     lower_hook2_geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
     lower_hook2 = new THREE.Mesh(lower_hook2_geometry, hook_material);
-    lower_hook2.position.set(31.25, 28.5, 6);
+    lower_hook2.position.set(0, 0, 0);
     lower_hook2.rotation.set(0, 0, 0);
     scene.add(lower_hook2);
 
     lower_hook3_geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
     lower_hook3 = new THREE.Mesh(lower_hook3_geometry, hook_material);
-    lower_hook3.position.set(30, 28.5, 7.25);
+    lower_hook3.position.set(0, 0, 0);
     lower_hook3.rotation.set(0, 0, 0);
     scene.add(lower_hook3);
 
     lower_hook4_geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
     lower_hook4 = new THREE.Mesh(lower_hook4_geometry, hook_material);
-    lower_hook4.position.set(28.75, 28.5, 6);
+    lower_hook4.position.set(0, 0, 0);
     lower_hook4.rotation.set(0, 0, 0);
     scene.add(lower_hook4);
 
     hooktip1_geometry = new THREE.ConeGeometry(0.33, 0.5, 4);
     hooktip1 = new THREE.Mesh(hooktip1_geometry, hook_material);
-    hooktip1.position.set(30, 28, 4.75);
+    hooktip1.position.set(0, -0.5, 0);
     hooktip1.rotation.set(0, 0.79, 3.14);
     scene.add(hooktip1);
 
     hooktip2_geometry = new THREE.ConeGeometry(0.33, 0.5, 4);
     hooktip2 = new THREE.Mesh(hooktip2_geometry, hook_material);
-    hooktip2.position.set(31.25, 28, 6);
+    hooktip2.position.set(0, -0.5, 0);
     hooktip2.rotation.set(0, 0.79, 3.14);
     scene.add(hooktip2);
     
     hooktip3_geometry = new THREE.ConeGeometry(0.33, 0.5, 4);
     hooktip3 = new THREE.Mesh(hooktip3_geometry, hook_material);
-    hooktip3.position.set(30, 28, 7.25);
+    hooktip3.position.set(0, -0.5, 0);
     hooktip3.rotation.set(0, 0.79, 3.14);
     scene.add(hooktip3);
 
     hooktip4_geometry = new THREE.ConeGeometry(0.33, 0.5, 4);
     hooktip4 = new THREE.Mesh(hooktip4_geometry, hook_material);
-    hooktip4.position.set(28.75, 28, 6);
+    hooktip4.position.set(0, -0.5, 0);
     hooktip4.rotation.set(0, 0.79, 3.14);
     scene.add(hooktip4);
+
 }
 
 function createContainer(){
@@ -301,19 +316,19 @@ function createObjects() {
 
     object2_geometry = new THREE.DodecahedronGeometry(1);
     object2 = new THREE.Mesh(object2_geometry, object_material);
-    object2.position.set(15, 5, 1);
+    object2.position.set(10, 5, -10);
     object2.rotation.set(0, 0, 0);
     scene.add(object2);
 
     object3_geometry = new THREE.IcosahedronGeometry(1.5);
     object3 = new THREE.Mesh(object3_geometry, object_material);
-    object3.position.set(40, 3, 5);
+    object3.position.set(15, 8, 5);
     object3.rotation.set(0, 0, 0);
     scene.add(object3);
 
     object4_geometry = new THREE.TorusGeometry(0.9, 0.5, 16, 100);
     object4 = new THREE.Mesh(object4_geometry, object_material);
-    object4.position.set(-10, 1, 5);
+    object4.position.set(-10, 15, -5);
     object4.rotation.set(1.57, 0, 0);
     scene.add(object4);
 
@@ -324,6 +339,84 @@ function createObjects() {
     scene.add(object5);
 }
 
+function grouper() {
+    'use strict';
+
+    lowhook1_group = new THREE.Group();
+    lowhook1_group.add(lower_hook1);
+    lowhook1_group.add(hooktip1);
+    scene.add(lowhook1_group);
+    
+    lowhook2_group = new THREE.Group();
+    lowhook2_group.add(lower_hook2);
+    lowhook2_group.add(hooktip2);
+    scene.add(lowhook2_group);
+    
+    lowhook3_group = new THREE.Group();
+    lowhook3_group.add(lower_hook3);
+    lowhook3_group.add(hooktip3);
+    scene.add(lowhook3_group);
+
+    lowhook4_group = new THREE.Group();
+    lowhook4_group.add(lower_hook4);
+    lowhook4_group.add(hooktip4);
+    scene.add(lowhook4_group);
+
+    // The pivots use the turntable as the (0, 0, 0) point
+    pivot1 = new THREE.Group();
+    pivot1.position.set(24, -18.5, -1.25);;
+    scene.add(pivot1);
+    pivot1.add(lowhook1_group);
+
+    pivot2 = new THREE.Group();
+    pivot2.position.set(25.25, -18.5, 0);
+    scene.add(pivot2);
+    pivot2.add(lowhook2_group);
+
+    pivot3 = new THREE.Group();
+    pivot3.position.set(24, -18.5, 1.25);
+    scene.add(pivot3);
+    pivot3.add(lowhook3_group);
+
+    pivot4 = new THREE.Group();
+    pivot4.position.set(22.75, -18.5, 0)
+    scene.add(pivot4);
+    pivot4.add(lowhook4_group);
+
+    hook_group = new THREE.Group();
+    hook_group.add(hook_block);
+    hook_group.add(upper_hook1);
+    hook_group.add(upper_hook2);
+    hook_group.add(upper_hook3);
+    hook_group.add(upper_hook4);
+    hook_group.add(pivot1);
+    hook_group.add(pivot2);
+    hook_group.add(pivot3);
+    hook_group.add(pivot4);
+    scene.add(hook_group);
+
+    trolley_group = new THREE.Group();
+    trolley_group.add(hook_group);
+    trolley_group.add(hook_cable);
+    trolley_group.add(trolley);
+    scene.add(trolley_group);
+
+    upper_group = new THREE.Group();
+    upper_group.add(trolley_group);
+    upper_group.add(cabin);
+    upper_group.add(jib);
+    upper_group.add(counter_jib);
+    upper_group.add(counterweight);
+    upper_group.add(upper_tower);
+    upper_group.add(tower_peak);
+    upper_group.add(cable1);
+    upper_group.add(cable2);
+    scene.add(upper_group);
+    
+    turntable.add(upper_group);
+    turntable.add(mobileCamera);
+
+}
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
@@ -375,8 +468,12 @@ function init() {
     createCrane();
     createContainer();
     createObjects();
+    grouper();
 
-    render()
+    render();
+    
+    currentCamera = frontalCamera;
+    claw_rot = 0;
 
     // Event listeners for keyboard input and window resize
     window.addEventListener("keydown", onKeyDown);
@@ -407,21 +504,87 @@ function onKeyDown(e) {
     switch (e.keyCode) {
         case 49: // '1'
             renderer.render(scene, frontalCamera);
+            currentCamera = frontalCamera;
             break;
         case 50: // '2'
             renderer.render(scene, lateralCamera);
+            currentCamera = lateralCamera;
             break;
         case 51: // '3'
             renderer.render(scene, topCamera);
+            currentCamera = topCamera;
             break;
         case 52: // '4'
             renderer.render(scene, fixOrtogonalCamera);
+            currentCamera = fixOrtogonalCamera;
             break;
         case 53: // '5'
             renderer.render(scene, fixPrespectiveCamera);
+            currentCamera = fixPrespectiveCamera;
             break;
         case 54: // '6'
             renderer.render(scene, mobileCamera);
+            currentCamera = mobileCamera;
+            break;
+        case 81: // 'Q(q)'
+            turntable.rotateY(Math.PI*0.01);
+            renderer.render(scene, currentCamera);
+            break;
+        case 65: // 'A(a)'
+            turntable.rotateY(Math.PI*-0.01);
+            renderer.render(scene, currentCamera);
+            break;
+        case 87: // 'W(w)'
+            if (trolley_group.position.x <= 1) {
+                trolley_group.position.x += 0.5;
+                mobileCamera.position.x += 0.5;
+                renderer.render(scene, currentCamera);
+            }
+            break;
+        case 83: // 'S(s)'
+            if (trolley_group.position.x >= -16.5) {
+                trolley_group.position.x -= 0.5;
+                mobileCamera.position.x -= 0.5;
+                renderer.render(scene, currentCamera);
+            }
+            break;
+        case 69: // 'E(e)'
+            if (hook_group.position.y <= 18) {
+                hook_cable.position.y += 0.25;
+                hook_cable.scale.y -= 0.025;
+                hook_group.position.y += 0.5;
+                mobileCamera.position.y += 0.5;
+                renderer.render(scene, currentCamera);
+            }
+            break;
+        case 68: // 'D(d)'
+            if (hook_group.position.y >= -23) {
+                hook_cable.position.y -= 0.25;
+                hook_cable.scale.y += 0.025;
+                hook_group.position.y -= 0.5;
+                mobileCamera.position.y -= 0.5;
+                renderer.render(scene, currentCamera);
+            }
+            break;
+        case 82: // 'R(r)'
+            if (claw_rot < 45) {
+                pivot1.rotation.x -= (Math.PI*0.01);
+                pivot2.rotation.z -= (Math.PI*0.01);
+                pivot3.rotation.x += (Math.PI*0.01);
+                pivot4.rotation.z += (Math.PI*0.01);
+                renderer.render(scene, currentCamera);
+                claw_rot += 1;
+            }
+            break;
+        case 70: // 'F(f)'
+            if (claw_rot > 0) {
+                pivot1.rotation.x += (Math.PI*0.01);
+                pivot2.rotation.z += (Math.PI*0.01);
+                pivot3.rotation.x -= (Math.PI*0.01);
+                pivot4.rotation.z -= (Math.PI*0.01);
+                renderer.render(scene, currentCamera);
+                claw_rot -= 1;
+            }
             break;
     }
 }
