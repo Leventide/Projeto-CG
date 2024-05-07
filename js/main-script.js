@@ -32,12 +32,12 @@ var hooktip1, hooktip2, hooktip3, hooktip4
 var cable1, cable2, hook_cable
 
 var container_base_geometry, container_side1_geometry, container_side2_geometry, container_side3_geometry, container_side4_geometry
-var object1_geometry, object2_geometry, object3_geometry, object4_geometry, object5_geometry
+var object1_geometry, object2_geometry, object3_geometry, object4_geometry, object5_geometry, object_geometry
 
 var container_base_material, container_side_material, object_material
 
 var container_base, container_side1, container_side2, container_side3, container_side4
-var object1, object2, object3, object4, object5
+var object1, object2, object3, object4, object5, object
 
 var upper_group, trolley_group, hook_group
 var lowhook1_group, lowhook2_group, lowhook3_group, lowhook4_group
@@ -51,6 +51,7 @@ var collision_sphere_material
 var claw_rot
 
 var mesh_array
+var positions = [];
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -314,7 +315,64 @@ function createObjects() {
 
     object_material = new THREE.MeshBasicMaterial({color: 'Turquoise'});
 
-    object1_geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+    for (var i = 0; i < 3; i++) {
+        var geometry_type = Math.floor(Math.random() * 5);
+        switch (geometry_type) {
+            case 0:
+                object_geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+                break;
+            case 1:
+                object_geometry = new THREE.DodecahedronGeometry(0.75);
+                break;
+            case 2:
+                object_geometry = new THREE.IcosahedronGeometry(0.75);
+                break;
+            case 3:
+                object_geometry = new THREE.TorusGeometry(0.375, 0.5, 16, 100);
+                break;
+            case 4:
+                object_geometry = new THREE.TorusKnotGeometry(0.25, 0.3, 100, 16);
+                break;
+        }
+        
+        var objectPosition;
+        do {
+            objectPosition = new THREE.Vector3(
+                Math.floor(Math.random() * 19) * (Math.round(Math.random()) * 2 - 1),
+                0.75,
+                Math.floor(Math.random() * 19) * (Math.round(Math.random()) * 2 - 1)
+            );
+        } while (isPositionValid(objectPosition));
+
+        positions.push(objectPosition.clone());
+
+        object = new THREE.Mesh(object_geometry, object_material);
+        object.position.copy(objectPosition);
+        scene.add(object);
+    }
+
+    function isPositionValid(position) {
+        var containerBaseBounds = new THREE.Box3().setFromObject(container_base);
+        if (containerBaseBounds.containsPoint(position)) {
+            return true;
+        }
+        
+        var craneBaseBounds = new THREE.Box3().setFromObject(base);
+        if (craneBaseBounds.containsPoint(position)) {
+            return true;
+        }
+
+        for (var j = 0; j < positions.length; j++) {
+            var distanceSquared = positions[j].distanceToSquared(position);
+            if (distanceSquared < 4) { 
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /*object1_geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
     object1 = new THREE.Mesh(object1_geometry, object_material);
     object1.position.set(20, 0.5, 20);
     object1.rotation.set(0, 0, 0);
@@ -342,8 +400,10 @@ function createObjects() {
     object5 = new THREE.Mesh(object5_geometry, object_material);
     object5.position.set(6, 0.5, 30);
     object5.rotation.set(1.57, 0, 0);
-    scene.add(object5);
+    scene.add(object5);*/
 }
+
+
 
 function grouper() {
     'use strict';
