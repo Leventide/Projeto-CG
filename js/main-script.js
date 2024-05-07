@@ -645,72 +645,52 @@ function onKeyDown(e) {
     switch (e.keyCode) {
         case 49: // '1'
             currentCamera = frontalCamera;
-            updateHUD(currentCamera, '1');
             break;
         case 50: // '2'
             currentCamera = lateralCamera;
-            updateHUD(currentCamera, '2');
             break;
         case 51: // '3'
             currentCamera = topCamera;
-            updateHUD(currentCamera, '3');
             break;
         case 52: // '4'
             currentCamera = fixOrtogonalCamera;
-            updateHUD(currentCamera, '4');
             break;
         case 53: // '5'
             currentCamera = fixPrespectiveCamera;
-            updateHUD(currentCamera, '5');
             break;
         case 54: // '6'
             currentCamera = mobileCamera;
-            updateHUD(currentCamera, '6');
             break;
         case 81: // 'Q(q)'
             turntable.rotateY(Math.PI*0.01);
-            updateHUD(currentCamera, 'Q');
             break;
         case 65: // 'A(a)'
             turntable.rotateY(Math.PI*-0.01);
-            updateHUD(currentCamera, 'A');
             break;
         case 87: // 'W(w)'
             trolley_move("out");
-            updateHUD(currentCamera, 'W');
             break;
         case 83: // 'S(s)'
             trolley_move("in");
-            updateHUD(currentCamera, 'S');
             break;
         case 69: // 'E(e)'
             claw_move("up");
-            updateHUD(currentCamera, 'E');
             break;
         case 68: // 'D(d)'
             claw_move("down");
-            updateHUD(currentCamera, 'D');
             break;
         case 82: // 'R(r)'
             claw_grasp("close");
-            updateHUD(currentCamera, 'R');
             break;
         case 70: // 'F(f)'
             claw_grasp("open");
-            updateHUD(currentCamera, 'F');
             break;
         case 48: // '0'
             for (var i = 0; i < mesh_array.length; i++) {
                 mesh_array[i].wireframe = !mesh_array[i].wireframe;
             }
-            updateHUD(currentCamera, '0');
             break;
     }
-}
-
-function updateHUD(cameraText, keyText) {
-    document.getElementById('camera-info').textContent = 'Current Camera: ' + cameraText;
-    document.getElementById('key-info').textContent = 'Pressed Key: ' + keyText;
 }
 
 init();
