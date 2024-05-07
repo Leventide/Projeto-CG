@@ -44,6 +44,10 @@ var lowhook1_group, lowhook2_group, lowhook3_group, lowhook4_group
 
 var pivot1, pivot2, pivot3, pivot4
 
+var collision_sphere1, collision_sphere2, collision_sphere3, collision_sphere4
+var collision_sphere1_geometry, collision_sphere2_geometry, collision_sphere3_geometry, collision_sphere4_geometry
+var collision_sphere_material
+
 var claw_rot
 
 var mesh_array
@@ -364,6 +368,35 @@ function grouper() {
     lowhook4_group.add(hooktip4);
     scene.add(lowhook4_group);
 
+    // Each collision_sphere serves as the 'hitboxes' of a respective lowhook
+    collision_sphere_material = new THREE.MeshBasicMaterial({color: 'white'});
+    collision_sphere_material.opacity = 0.25;
+    collision_sphere_material.transparent = true ;
+
+    collision_sphere1_geometry = new THREE.SphereGeometry(1, 32, 16);
+    collision_sphere1 = new THREE.Mesh(collision_sphere1_geometry, collision_sphere_material);
+    collision_sphere1.position.set(0, 0, 0);
+    collision_sphere1.rotation.set(0, 0, 0);
+    lowhook1_group.add(collision_sphere1);
+
+    collision_sphere2_geometry = new THREE.SphereGeometry(1, 32, 16);
+    collision_sphere2 = new THREE.Mesh(collision_sphere2_geometry, collision_sphere_material);
+    collision_sphere2.position.set(0, 0, 0);
+    collision_sphere2.rotation.set(0, 0, 0);
+    lowhook2_group.add(collision_sphere2);
+
+    collision_sphere3_geometry = new THREE.SphereGeometry(1, 32, 16);
+    collision_sphere3 = new THREE.Mesh(collision_sphere3_geometry, collision_sphere_material);
+    collision_sphere3.position.set(0, 0, 0);
+    collision_sphere3.rotation.set(0, 0, 0);
+    lowhook3_group.add(collision_sphere3);
+
+    collision_sphere4_geometry = new THREE.SphereGeometry(1, 32, 16);
+    collision_sphere4 = new THREE.Mesh(collision_sphere4_geometry, collision_sphere_material);
+    collision_sphere4.position.set(0, 0, 0);
+    collision_sphere4.rotation.set(0, 0, 0);
+    lowhook4_group.add(collision_sphere4);
+
     // The pivots use the turntable as the (0, 0, 0) point
     pivot1 = new THREE.Group();
     pivot1.position.set(24, -18.5, -1.25);;
@@ -420,10 +453,34 @@ function grouper() {
 
 }
 
-//////////////////////
+///////////////////////
 /* MOVEMENT FUNCTONS */
 //////////////////////
-function claw(action){
+function trolley_move(direction) {
+    if (direction == "out" && trolley_group.position.x <= 1) {
+        trolley_group.position.x += 0.5;
+        mobileCamera.position.x += 0.5;
+    } else if (direction == "in" && trolley_group.position.x >= -16.5) {
+        trolley_group.position.x -= 0.5;
+        mobileCamera.position.x -= 0.5;
+    }
+}
+
+function claw_move(direction) {
+    if (direction == "up" && hook_group.position.y <= 18) {
+        hook_cable.position.y += 0.25;
+        hook_cable.scale.y -= 0.025;
+        hook_group.position.y += 0.5;
+        mobileCamera.position.y += 0.5;
+    } else if (direction == "down" && hook_group.position.y >= -23) {
+        hook_cable.position.y -= 0.25;
+        hook_cable.scale.y += 0.025;
+        hook_group.position.y -= 0.5;
+        mobileCamera.position.y -= 0.5;
+    }
+}
+
+function claw_grasp(action){
     if (action == "open" && claw_rot > 0) {
         pivot1.rotation.x += (Math.PI*0.01);
         pivot2.rotation.z += (Math.PI*0.01);
@@ -445,21 +502,28 @@ function claw(action){
 function checkCollisions(){
     'use strict';
 
+
 }
+
 
 ///////////////////////
 /* HANDLE COLLISIONS */
 ///////////////////////
-function handleCollisions(){
+function handleCollisions(object){
     'use strict';
+    
+    // These are the 2 instantaneous parts, the object tp, and claw instaclose
+    hook_block.add(object);
+    object.position.x = 0;
+    object.position.y = -1.85;
+    object.position.z = 0;
 
-}
+    pivot1.rotation.x = -(Math.PI*0.45);
+    pivot2.rotation.z = -(Math.PI*0.45);
+    pivot3.rotation.x = (Math.PI*0.45);
+    pivot4.rotation.z = (Math.PI*0.45);
+    claw_rot = 45;
 
-////////////
-/* UPDATE */
-////////////
-function update(){
-    'use strict';
 
 }
 
@@ -545,44 +609,27 @@ function onKeyDown(e) {
             break;
         case 81: // 'Q(q)'
             turntable.rotateY(Math.PI*0.01);
-            renderer.render(scene, currentCamera);
             break;
         case 65: // 'A(a)'
             turntable.rotateY(Math.PI*-0.01);
             break;
         case 87: // 'W(w)'
-            if (trolley_group.position.x <= 1) {
-                trolley_group.position.x += 0.5;
-                mobileCamera.position.x += 0.5;
-            }
+            trolley_move("out");
             break;
         case 83: // 'S(s)'
-            if (trolley_group.position.x >= -16.5) {
-                trolley_group.position.x -= 0.5;
-                mobileCamera.position.x -= 0.5;
-            }
+            trolley_move("in");
             break;
         case 69: // 'E(e)'
-            if (hook_group.position.y <= 18) {
-                hook_cable.position.y += 0.25;
-                hook_cable.scale.y -= 0.025;
-                hook_group.position.y += 0.5;
-                mobileCamera.position.y += 0.5;
-            }
+            claw_move("up");
             break;
         case 68: // 'D(d)'
-            if (hook_group.position.y >= -23) {
-                hook_cable.position.y -= 0.25;
-                hook_cable.scale.y += 0.025;
-                hook_group.position.y -= 0.5;
-                mobileCamera.position.y -= 0.5;
-            }
+            claw_move("down");
             break;
         case 82: // 'R(r)'
-            claw("close");
+            claw_grasp("close");
             break;
         case 70: // 'F(f)'
-            claw("open");
+            claw_grasp("open");
             break;
         case 48: // '0'
             for (var i = 0; i < mesh_array.length; i++) {
