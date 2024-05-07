@@ -46,6 +46,8 @@ var pivot1, pivot2, pivot3, pivot4
 
 var claw_rot
 
+var mesh_array
+
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
@@ -139,7 +141,7 @@ function createCrane(){
     tower_peak_geometry = new THREE.ConeGeometry(2.12, 3, 4);
     tower_peak = new THREE.Mesh(tower_peak_geometry, main_material);
     tower_peak.position.set(0, 13, 0);
-    tower_peak.rotation.set(0, 0.79, 0);
+    tower_peak.rotation.set(0, Math.PI*0.25, 0);
     scene.add(tower_peak);
 
     jib_geometry = new THREE.BoxGeometry(25, 1.5, 3);
@@ -242,25 +244,25 @@ function createCrane(){
     hooktip1_geometry = new THREE.ConeGeometry(0.33, 0.5, 4);
     hooktip1 = new THREE.Mesh(hooktip1_geometry, hook_material);
     hooktip1.position.set(0, -0.5, 0);
-    hooktip1.rotation.set(0, 0.79, 3.14);
+    hooktip1.rotation.set(0, Math.PI*0.25, Math.PI);
     scene.add(hooktip1);
 
     hooktip2_geometry = new THREE.ConeGeometry(0.33, 0.5, 4);
     hooktip2 = new THREE.Mesh(hooktip2_geometry, hook_material);
     hooktip2.position.set(0, -0.5, 0);
-    hooktip2.rotation.set(0, 0.79, 3.14);
+    hooktip2.rotation.set(0, Math.PI*0.25, Math.PI);
     scene.add(hooktip2);
     
     hooktip3_geometry = new THREE.ConeGeometry(0.33, 0.5, 4);
     hooktip3 = new THREE.Mesh(hooktip3_geometry, hook_material);
     hooktip3.position.set(0, -0.5, 0);
-    hooktip3.rotation.set(0, 0.79, 3.14);
+    hooktip3.rotation.set(0, Math.PI*0.25, Math.PI);
     scene.add(hooktip3);
 
     hooktip4_geometry = new THREE.ConeGeometry(0.33, 0.5, 4);
     hooktip4 = new THREE.Mesh(hooktip4_geometry, hook_material);
     hooktip4.position.set(0, -0.5, 0);
-    hooktip4.rotation.set(0, 0.79, 3.14);
+    hooktip4.rotation.set(0, Math.PI*0.25, Math.PI);
     scene.add(hooktip4);
 
 }
@@ -417,6 +419,26 @@ function grouper() {
     turntable.add(mobileCamera);
 
 }
+
+//////////////////////
+/* MOVEMENT FUNCTONS */
+//////////////////////
+function claw(action){
+    if (action == "open" && claw_rot > 0) {
+        pivot1.rotation.x += (Math.PI*0.01);
+        pivot2.rotation.z += (Math.PI*0.01);
+        pivot3.rotation.x -= (Math.PI*0.01);
+        pivot4.rotation.z -= (Math.PI*0.01);
+        claw_rot -= 1;
+    } else if (action == "close" && claw_rot < 45) {
+        pivot1.rotation.x -= (Math.PI*0.01);
+        pivot2.rotation.z -= (Math.PI*0.01);
+        pivot3.rotation.x += (Math.PI*0.01);
+        pivot4.rotation.z += (Math.PI*0.01);
+        claw_rot += 1;
+    }
+}
+
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
@@ -474,6 +496,7 @@ function init() {
     
     currentCamera = frontalCamera;
     claw_rot = 0;
+    mesh_array = [base_material, main_material, cabin_material, trolley_material, cable_material, hook_material, container_base_material, container_side_material, object_material]
 
     // Event listeners for keyboard input and window resize
     window.addEventListener("keydown", onKeyDown);
@@ -485,14 +508,8 @@ function init() {
 function animate() {
     'use strict';
 
-}
-
-////////////////////////////
-/* RESIZE WINDOW CALLBACK */
-////////////////////////////
-function onResize() { 
-    'use strict';
-
+    renderer.render(scene, currentCamera);
+    requestAnimationFrame(animate);
 }
 
 ///////////////////////
@@ -532,20 +549,17 @@ function onKeyDown(e) {
             break;
         case 65: // 'A(a)'
             turntable.rotateY(Math.PI*-0.01);
-            renderer.render(scene, currentCamera);
             break;
         case 87: // 'W(w)'
             if (trolley_group.position.x <= 1) {
                 trolley_group.position.x += 0.5;
                 mobileCamera.position.x += 0.5;
-                renderer.render(scene, currentCamera);
             }
             break;
         case 83: // 'S(s)'
             if (trolley_group.position.x >= -16.5) {
                 trolley_group.position.x -= 0.5;
                 mobileCamera.position.x -= 0.5;
-                renderer.render(scene, currentCamera);
             }
             break;
         case 69: // 'E(e)'
@@ -554,7 +568,6 @@ function onKeyDown(e) {
                 hook_cable.scale.y -= 0.025;
                 hook_group.position.y += 0.5;
                 mobileCamera.position.y += 0.5;
-                renderer.render(scene, currentCamera);
             }
             break;
         case 68: // 'D(d)'
@@ -563,37 +576,21 @@ function onKeyDown(e) {
                 hook_cable.scale.y += 0.025;
                 hook_group.position.y -= 0.5;
                 mobileCamera.position.y -= 0.5;
-                renderer.render(scene, currentCamera);
             }
             break;
         case 82: // 'R(r)'
-            if (claw_rot < 45) {
-                pivot1.rotation.x -= (Math.PI*0.01);
-                pivot2.rotation.z -= (Math.PI*0.01);
-                pivot3.rotation.x += (Math.PI*0.01);
-                pivot4.rotation.z += (Math.PI*0.01);
-                renderer.render(scene, currentCamera);
-                claw_rot += 1;
-            }
+            claw("close");
             break;
         case 70: // 'F(f)'
-            if (claw_rot > 0) {
-                pivot1.rotation.x += (Math.PI*0.01);
-                pivot2.rotation.z += (Math.PI*0.01);
-                pivot3.rotation.x -= (Math.PI*0.01);
-                pivot4.rotation.z -= (Math.PI*0.01);
-                renderer.render(scene, currentCamera);
-                claw_rot -= 1;
+            claw("open");
+            break;
+        case 48: // '0'
+            for (var i = 0; i < mesh_array.length; i++) {
+                mesh_array[i].wireframe = !mesh_array[i].wireframe;
             }
             break;
     }
 }
 
-///////////////////////
-/* KEY UP CALLBACK */
-///////////////////////
-function onKeyUp(e){
-    'use strict';
-}
-
 init();
+animate();
