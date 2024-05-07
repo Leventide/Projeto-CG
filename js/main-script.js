@@ -32,12 +32,13 @@ var hooktip1, hooktip2, hooktip3, hooktip4
 var cable1, cable2, hook_cable
 
 var container_base_geometry, container_side1_geometry, container_side2_geometry, container_side3_geometry, container_side4_geometry
-var object1_geometry, object2_geometry, object3_geometry, object4_geometry, object5_geometry, object_geometry
+var object_geometry1, object_geometry2, object_geometry3
+var objectPosition1, objectPosition2, objectPosition3
 
 var container_base_material, container_side_material, object_material
 
 var container_base, container_side1, container_side2, container_side3, container_side4
-var object1, object2, object3, object4, object5, object
+var object1, object2, object3
 
 var upper_group, trolley_group, hook_group
 var lowhook1_group, lowhook2_group, lowhook3_group, lowhook4_group
@@ -46,12 +47,16 @@ var pivot1, pivot2, pivot3, pivot4
 
 var collision_sphere1, collision_sphere2, collision_sphere3, collision_sphere4
 var collision_sphere1_geometry, collision_sphere2_geometry, collision_sphere3_geometry, collision_sphere4_geometry
+var collision_object1, collision_object2, collision_object3
+var collision_object1_geometry, collision_object2_geometry, collision_object3_geometry
 var collision_sphere_material
 
 var claw_rot
 
 var mesh_array
 var positions = [];
+
+var geometry_type, objectPosition, object_geometry
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -132,7 +137,7 @@ function createCrane(){
     //  Positions of the next obejcts might look weird
     //  That's because they're using the turntable as the (0,0,0) point
     cabin_geometry = new THREE.BoxGeometry(6, 4, 3);
-    cabin= new THREE.Mesh(cabin_geometry, cabin_material);
+    cabin = new THREE.Mesh(cabin_geometry, cabin_material);
     cabin.position.set(1, 3, 0);
     cabin.rotation.set(0, 0, 0);
     scene.add(cabin);
@@ -315,95 +320,76 @@ function createObjects() {
 
     object_material = new THREE.MeshBasicMaterial({color: 'Turquoise'});
 
-    for (var i = 0; i < 3; i++) {
-        var geometry_type = Math.floor(Math.random() * 5);
+    object_geometry1 = randomObjectGeometry();
+    objectPosition1 = randomObjectPosition();
+    
+    object1 = new THREE.Mesh(object_geometry1, object_material);
+    object1.position.copy(objectPosition1);
+    object1.rotation.set(1.57, 0, 0);
+    scene.add(object1);
+
+    object_geometry2 = randomObjectGeometry();
+    objectPosition2 = randomObjectPosition();
+
+    object2 = new THREE.Mesh(object_geometry2, object_material);
+    object2.position.copy(objectPosition2);
+    object2.rotation.set(1.57, 0, 0);
+    scene.add(object2);
+    
+    object_geometry3 = randomObjectGeometry();
+    objectPosition3 = randomObjectPosition();
+
+    object3 = new THREE.Mesh(object_geometry3, object_material);
+    object3.position.copy(objectPosition3);
+    object3.rotation.set(1.57, 0, 0);
+    scene.add(object3);
+
+    function randomObjectGeometry(){
+        geometry_type = Math.floor(Math.random() * 5);
         switch (geometry_type) {
             case 0:
-                object_geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-                break;
+                return object_geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
             case 1:
-                object_geometry = new THREE.DodecahedronGeometry(0.75);
-                break;
+                return object_geometry = new THREE.DodecahedronGeometry(1);
             case 2:
-                object_geometry = new THREE.IcosahedronGeometry(0.75);
-                break;
+                return object_geometry = new THREE.IcosahedronGeometry(1);
             case 3:
-                object_geometry = new THREE.TorusGeometry(0.375, 0.5, 16, 100);
-                break;
+                return object_geometry = new THREE.TorusGeometry(0.6, 0.3, 16, 100);
             case 4:
-                object_geometry = new THREE.TorusKnotGeometry(0.25, 0.3, 100, 16);
-                break;
+                return object_geometry = new THREE.TorusKnotGeometry(0.6, 0.2, 100, 16);
         }
-        
-        var objectPosition;
+    }
+    
+    function randomObjectPosition() {
         do {
             objectPosition = new THREE.Vector3(
-                Math.floor(Math.random() * 19) * (Math.round(Math.random()) * 2 - 1),
+                (Math.floor(Math.random() * 19) * (Math.round(Math.random()) * 2 - 1))+8,
                 0.75,
-                Math.floor(Math.random() * 19) * (Math.round(Math.random()) * 2 - 1)
+                (Math.floor(Math.random() * 19) * (Math.round(Math.random()) * 2 - 1))+8
             );
-        } while (isPositionValid(objectPosition));
+        } while (isPositionInvalid(objectPosition));
 
-        positions.push(objectPosition.clone());
-
-        object = new THREE.Mesh(object_geometry, object_material);
-        object.position.copy(objectPosition);
-        scene.add(object);
+        return objectPosition
     }
 
-    function isPositionValid(position) {
-        var containerBaseBounds = new THREE.Box3().setFromObject(container_base);
-        if (containerBaseBounds.containsPoint(position)) {
+    function isPositionInvalid(position) {
+        if (position.x < 38 && position.x > 22 && position.z < 14 && position.z > -2) {
             return true;
         }
-        
-        var craneBaseBounds = new THREE.Box3().setFromObject(base);
-        if (craneBaseBounds.containsPoint(position)) {
+        if (position.x < 15 && position.x > -5 && position.z < 15 && position.z > -5) {
             return true;
         }
 
         for (var j = 0; j < positions.length; j++) {
             var distanceSquared = positions[j].distanceToSquared(position);
-            if (distanceSquared < 4) { 
+            if (distanceSquared < 20) { 
                 return true;
             }
         }
         
         return false;
     }
-
-    /*object1_geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-    object1 = new THREE.Mesh(object1_geometry, object_material);
-    object1.position.set(20, 0.5, 20);
-    object1.rotation.set(0, 0, 0);
-    scene.add(object1);
-
-    object2_geometry = new THREE.DodecahedronGeometry(1);
-    object2 = new THREE.Mesh(object2_geometry, object_material);
-    object2.position.set(10, 5, -10);
-    object2.rotation.set(0, 0, 0);
-    scene.add(object2);
-
-    object3_geometry = new THREE.IcosahedronGeometry(1.5);
-    object3 = new THREE.Mesh(object3_geometry, object_material);
-    object3.position.set(15, 8, 5);
-    object3.rotation.set(0, 0, 0);
-    scene.add(object3);
-
-    object4_geometry = new THREE.TorusGeometry(0.9, 0.5, 16, 100);
-    object4 = new THREE.Mesh(object4_geometry, object_material);
-    object4.position.set(-10, 15, -5);
-    object4.rotation.set(1.57, 0, 0);
-    scene.add(object4);
-
-    object5_geometry = new THREE.TorusKnotGeometry(0.8, 0.3, 100, 16);
-    object5 = new THREE.Mesh(object5_geometry, object_material);
-    object5.position.set(6, 0.5, 30);
-    object5.rotation.set(1.57, 0, 0);
-    scene.add(object5);*/
 }
-
-
 
 function grouper() {
     'use strict';
@@ -457,6 +443,26 @@ function grouper() {
     collision_sphere4.rotation.set(0, 0, 0);
     lowhook4_group.add(collision_sphere4);
 
+    //The collision_object serve as such for the objects
+
+    collision_object1_geometry = new THREE.SphereGeometry(1, 32, 16);
+    collision_object1 = new THREE.Mesh(collision_object1_geometry, collision_sphere_material);
+    collision_object1.position.set(0, 0, 0);
+    collision_object1.rotation.set(0, 0, 0);
+    object1.add(collision_object1);
+
+    collision_object2_geometry = new THREE.SphereGeometry(1, 32, 16);
+    collision_object2 = new THREE.Mesh(collision_object2_geometry, collision_sphere_material);
+    collision_object2.position.set(0, 0, 0);
+    collision_object2.rotation.set(0, 0, 0);
+    object2.add(collision_object2);
+
+    collision_object3_geometry = new THREE.SphereGeometry(1, 32, 16);
+    collision_object3 = new THREE.Mesh(collision_object3_geometry, collision_sphere_material);
+    collision_object3.position.set(0, 0, 0);
+    collision_object3.rotation.set(0, 0, 0);
+    object3.add(collision_object3);
+
     // The pivots use the turntable as the (0, 0, 0) point
     pivot1 = new THREE.Group();
     pivot1.position.set(24, -18.5, -1.25);;
@@ -506,10 +512,10 @@ function grouper() {
     upper_group.add(tower_peak);
     upper_group.add(cable1);
     upper_group.add(cable2);
+    upper_group.add(mobileCamera)
     scene.add(upper_group);
     
     turntable.add(upper_group);
-    turntable.add(mobileCamera);
 
 }
 
@@ -520,7 +526,7 @@ function trolley_move(direction) {
     if (direction == "out" && trolley_group.position.x <= 1) {
         trolley_group.position.x += 0.5;
         mobileCamera.position.x += 0.5;
-    } else if (direction == "in" && trolley_group.position.x >= -16.5) {
+    } else if (direction == "in" && trolley_group.position.x >= -14.5) {
         trolley_group.position.x -= 0.5;
         mobileCamera.position.x -= 0.5;
     }
@@ -662,10 +668,10 @@ function onKeyDown(e) {
             currentCamera = mobileCamera;
             break;
         case 81: // 'Q(q)'
-            turntable.rotateY(Math.PI*0.01);
+            turntable.rotation.y += (Math.PI*0.01);
             break;
         case 65: // 'A(a)'
-            turntable.rotateY(Math.PI*-0.01);
+            turntable.rotation.y -= (Math.PI*0.01);
             break;
         case 87: // 'W(w)'
             trolley_move("out");
