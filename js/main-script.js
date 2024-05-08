@@ -61,6 +61,8 @@ var clock = new THREE.Clock();
 var delta
 var next
 
+let wireframePressed = false;
+
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
@@ -720,6 +722,8 @@ function init() {
     grouper();
 
     render();
+
+    highlightItem('frontal');
     
     currentCamera = frontalCamera;
     claw_rot = 0;
@@ -730,6 +734,7 @@ function init() {
 
     // Event listeners for keyboard input and window resize
     window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
 }
 
 /////////////////////
@@ -750,57 +755,126 @@ function animate() {
 function onKeyDown(e) {
     'use strict';
 
+    if (e.keyCode >= 49 && e.keyCode <= 54) {
+        document.querySelectorAll('.item').forEach(item => {
+            item.classList.remove('active');
+        });
+    }
+
     switch (e.keyCode) {
         case 49: // '1'
             currentCamera = frontalCamera;
+            highlightItem('frontal');
             break;
         case 50: // '2'
             currentCamera = lateralCamera;
+            highlightItem('lateral');
             break;
         case 51: // '3'
             currentCamera = topCamera;
+            highlightItem('topo');
             break;
         case 52: // '4'
             currentCamera = fixOrtogonalCamera;
+            highlightItem('fixa-ortogonal');
             break;
         case 53: // '5'
             currentCamera = fixPrespectiveCamera;
+            highlightItem('fixa-prespectiva');
             break;
         case 54: // '6'
             currentCamera = mobileCamera;
+            highlightItem('movel');
             break;
         case 81: // 'Q(q)'
             turntable.rotation.y += (Math.PI*0.01);
             console.log(turntable.rotation.y)
+            highlightItem('q');
             break;
         case 65: // 'A(a)'
             turntable.rotation.y -= (Math.PI*0.01);
             console.log(turntable.rotation.y)
+            highlightItem('a');
             break;
         case 87: // 'W(w)'
             trolley_move("out");
+            highlightItem('w');
             break;
         case 83: // 'S(s)'
             trolley_move("in");
+            highlightItem('s');
             break;
         case 69: // 'E(e)'
             claw_move("up");
+            highlightItem('e');
             break;
         case 68: // 'D(d)'
             claw_move("down");
+            highlightItem('d');
             break;
         case 82: // 'R(r)'
             claw_grasp("close");
+            highlightItem('r');
             break;
         case 70: // 'F(f)'
             claw_grasp("open");
+            highlightItem('f');
             break;
         case 48: // '0'
-            for (var i = 0; i < mesh_array.length; i++) {
-                mesh_array[i].wireframe = !mesh_array[i].wireframe;
+            if (!wireframePressed) {
+                for (var i = 0; i < mesh_array.length; i++) {
+                    mesh_array[i].wireframe = !mesh_array[i].wireframe;
+                }
+                if (document.getElementById('wireframe').classList.contains('active')) {
+                    unhighlightItem('wireframe');
+                } else {
+                    highlightItem('wireframe');
+                }
+                wireframePressed = true;
             }
             break;
     }
+}
+
+function onKeyUp(e) {
+    'use strict'
+    switch (e.keyCode) {
+        case 48: // '0'
+            wireframePressed = false;
+            break;
+        case 81: // 'Q(q)'
+            unhighlightItem('q');
+            break;
+        case 65: // 'A(a)'
+            unhighlightItem('a');
+            break;
+        case 87: // 'W(w)'
+            unhighlightItem('w');
+            break;
+        case 83: // 'S(s)'
+            unhighlightItem('s');
+            break;
+        case 69: // 'E(e)'
+            unhighlightItem('e');
+            break;
+        case 68: // 'D(d)'
+            unhighlightItem('d');
+            break;
+        case 82: // 'R(r)'
+            unhighlightItem('r');
+            break;
+        case 70: // 'F(f)'
+            unhighlightItem('f');   
+            break;
+    }
+}
+
+function highlightItem(itemId) {
+    document.getElementById(itemId).classList.add('active');
+}
+
+function unhighlightItem(itemId) {
+    document.getElementById(itemId).classList.remove('active');
 }
 
 init();
