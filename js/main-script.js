@@ -14,7 +14,6 @@ var scene, renderer
 
 var currentCamera
 
-
 var base_geometry, mast_geometry, turntable_geometry, cabin_geometry, upper_tower_geometry, tower_peak_geometry
 var jib_geometry, counter_jib_geometry, counterweight_geometry, trolley_geometry, hook_block_geometry
 var upper_hook1_geometry, upper_hook2_geometry, upper_hook3_geometry, upper_hook4_geometry
@@ -52,11 +51,15 @@ var collision_object1_geometry, collision_object2_geometry, collision_object3_ge
 var collision_sphere_material
 
 var claw_rot
-
 var mesh_array
 var positions = [];
 
 var geometry_type, objectPosition, object_geometry
+
+var collision_object_array, collision_sphere_array
+var clock = new THREE.Clock();
+var delta
+var next
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -364,7 +367,7 @@ function createObjects() {
         do {
             objectPosition = new THREE.Vector3(
                 (Math.floor(Math.random() * 19) * (Math.round(Math.random()) * 2 - 1))+8,
-                0.75,
+                1,
                 (Math.floor(Math.random() * 19) * (Math.round(Math.random()) * 2 - 1))+8
             );
         } while (isPositionInvalid(objectPosition));
@@ -381,8 +384,7 @@ function createObjects() {
         }
 
         for (var j = 0; j < positions.length; j++) {
-            var distanceSquared = positions[j].distanceToSquared(position);
-            if (distanceSquared < 20) { 
+            if (distance(positions[j], position) < 20) { 
                 return true;
             }
         }
@@ -397,26 +399,22 @@ function grouper() {
     lowhook1_group = new THREE.Group();
     lowhook1_group.add(lower_hook1);
     lowhook1_group.add(hooktip1);
-    scene.add(lowhook1_group);
     
     lowhook2_group = new THREE.Group();
     lowhook2_group.add(lower_hook2);
     lowhook2_group.add(hooktip2);
-    scene.add(lowhook2_group);
     
     lowhook3_group = new THREE.Group();
     lowhook3_group.add(lower_hook3);
     lowhook3_group.add(hooktip3);
-    scene.add(lowhook3_group);
 
     lowhook4_group = new THREE.Group();
     lowhook4_group.add(lower_hook4);
     lowhook4_group.add(hooktip4);
-    scene.add(lowhook4_group);
 
     // Each collision_sphere serves as the 'hitboxes' of a respective lowhook
     collision_sphere_material = new THREE.MeshBasicMaterial({color: 'white'});
-    collision_sphere_material.opacity = 0.25;
+    collision_sphere_material.opacity = 0.75;
     collision_sphere_material.transparent = true ;
 
     collision_sphere1_geometry = new THREE.SphereGeometry(1, 32, 16);
@@ -494,13 +492,11 @@ function grouper() {
     hook_group.add(pivot2);
     hook_group.add(pivot3);
     hook_group.add(pivot4);
-    scene.add(hook_group);
 
     trolley_group = new THREE.Group();
     trolley_group.add(hook_group);
     trolley_group.add(hook_cable);
     trolley_group.add(trolley);
-    scene.add(trolley_group);
 
     upper_group = new THREE.Group();
     upper_group.add(trolley_group);
@@ -513,7 +509,6 @@ function grouper() {
     upper_group.add(cable1);
     upper_group.add(cable2);
     upper_group.add(mobileCamera)
-    scene.add(upper_group);
     
     turntable.add(upper_group);
 
@@ -521,7 +516,7 @@ function grouper() {
 
 ///////////////////////
 /* MOVEMENT FUNCTONS */
-//////////////////////
+///////////////////////
 function trolley_move(direction) {
     if (direction == "out" && trolley_group.position.x <= 1) {
         trolley_group.position.x += 0.5;
@@ -568,7 +563,30 @@ function claw_grasp(action){
 function checkCollisions(){
     'use strict';
 
+    loop1:
+        for(var k = 0; k < collision_sphere_array.length; k++) {
+            for(var n = 0; n < collision_object_array.length; n++) {
+                if(distance(collision_sphere_array[k], collision_object_array[n]) <= 2) {
+                    handleCollisions(collision_object_array[n].parent);
+                    break loop1;
+                }
+            }
+        }
+}
 
+function distance(object1, object2)
+{
+    var world1 = new THREE.Vector3();
+    var world_pos1 = object1.getWorldPosition(world1);
+
+    var world2 = new THREE.Vector3();
+    var world_pos2 = object2.getWorldPosition(world2);
+
+    var dx = world_pos1.x - world_pos2.x;
+    var dy = world_pos1.y - world_pos2.y;
+    var dz = world_pos1.z - world_pos2.z;
+    
+    return Math.sqrt( dx * dx + dy * dy + dz * dz );
 }
 
 
@@ -578,7 +596,7 @@ function checkCollisions(){
 function handleCollisions(object){
     'use strict';
     
-    // These are the 2 instantaneous parts, the object tp, and claw instaclose
+    // These are the instantaneous parts, the collison sphere erase, the object teleport, and claw instaclose
     hook_block.add(object);
     object.position.x = 0;
     object.position.y = -1.85;
@@ -589,6 +607,85 @@ function handleCollisions(object){
     pivot3.rotation.x = (Math.PI*0.45);
     pivot4.rotation.z = (Math.PI*0.45);
     claw_rot = 45;
+    if (next == 0) {
+        next = 1;
+    }
+    function move_up() {
+        if (hook_group.position.y <= 18 && next == 1) {
+            delta = clock.getDelta();
+            hook_cable.position.y += 0.25*delta*20;
+            hook_cable.scale.y -= 0.025*delta*20;
+            hook_group.position.y += 0.5*delta*20;
+            mobileCamera.position.y += 0.5*delta*20;
+        } else if (hook_group.position.y > 18 && next == 1) {
+            next = 2;
+        }
+    }
+
+    function move_rotate() {
+        
+        if (next == 2) {
+            delta = clock.getDelta();
+            if (turntable.rotation.y > Math.PI*2) {
+                turntable.rotation.y -= Math.PI*2;
+            } else if (turntable.rotation.y < -Math.PI*2) {
+                turntable.rotation.y += Math.PI*2;
+            }
+            if (turntable.rotation.y >= 0-delta*2 && turntable.rotation.y <= 0+delta*2) {
+                turntable.rotation.y = 0;
+                next = 3
+            } else if ((turntable.rotation.y > -Math.PI && turntable.rotation.y < 0-delta) || turntable.rotation.y > Math.PI) {
+                turntable.rotation.y += (Math.PI*0.01)*delta*20;
+            } else if ((turntable.rotation.y < Math.PI && turntable.rotation.y > 0+delta) || turntable.rotation.y < -Math.PI) {
+                turntable.rotation.y -= (Math.PI*0.01)*delta*20;
+            }
+        }
+        
+    }
+    function move_side() {
+        if (trolley_group.position.x < 0 && next == 3) {
+            delta = clock.getDelta();
+            trolley_group.position.x += 0.5*delta*20;
+            mobileCamera.position.x += 0.5*delta*20;
+        } else if (trolley_group.position.x >= 0 && next == 3) {
+            next = 4;
+        }
+    }
+    function move_down() {
+        if (hook_group.position.y >= -23 && next == 4) {
+            delta = clock.getDelta();
+            hook_cable.position.y -= 0.25*delta*20;
+            hook_cable.scale.y += 0.025*delta*20;
+            hook_group.position.y -= 0.5*delta*20;
+            mobileCamera.position.y -= 0.5*delta*20;
+        } else if (hook_group.position.y < -23 && next == 4) {
+            next = 5;
+        }
+    }
+    function move_end(){
+        if (next == 5) {
+            hook_block.remove(object);
+            pivot1.rotation.x = 0;
+            pivot2.rotation.z = 0;
+            pivot3.rotation.x = 0;
+            pivot4.rotation.z = 0;
+            claw_rot = 0;
+            next = 0;
+        }
+    }
+    
+    
+    move_up();
+    move_rotate();
+    move_side();
+    move_down();
+    move_end();
+    
+
+    //have the animation
+
+    //then once it's stopped move the object down a bit so it falls inside the container
+    //then scene.remove the object
 
 
 }
@@ -626,7 +723,10 @@ function init() {
     
     currentCamera = frontalCamera;
     claw_rot = 0;
-    mesh_array = [base_material, main_material, cabin_material, trolley_material, cable_material, hook_material, container_base_material, container_side_material, object_material]
+    next = 0;
+    mesh_array = [base_material, main_material, cabin_material, trolley_material, cable_material, hook_material, container_base_material, container_side_material, object_material];
+    collision_object_array = [collision_object1, collision_object2, collision_object3];
+    collision_sphere_array = [collision_sphere1, collision_sphere2, collision_sphere3, collision_sphere4];
 
     // Event listeners for keyboard input and window resize
     window.addEventListener("keydown", onKeyDown);
@@ -637,6 +737,8 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
+
+    checkCollisions();
 
     renderer.render(scene, currentCamera);
     requestAnimationFrame(animate);
@@ -669,9 +771,11 @@ function onKeyDown(e) {
             break;
         case 81: // 'Q(q)'
             turntable.rotation.y += (Math.PI*0.01);
+            console.log(turntable.rotation.y)
             break;
         case 65: // 'A(a)'
             turntable.rotation.y -= (Math.PI*0.01);
+            console.log(turntable.rotation.y)
             break;
         case 87: // 'W(w)'
             trolley_move("out");
