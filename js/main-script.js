@@ -572,19 +572,12 @@ function handleCollisions(object){
     unhighlightItem('d');
     unhighlightItem('r');
     unhighlightItem('f');
-    
-    if (next == 0) {
-        console.log(hook_block.position);
-    }
 
     hook_block.add(object);
     object.position.x = 0;
     object.position.y = -1.85;
     object.position.z = 0;
-    
-    if (next == 0) {
-        console.log(hook_block.position);
-    }
+
 
     pivot1.rotation.x = -(Math.PI*0.45);
     pivot2.rotation.z = -(Math.PI*0.45);
@@ -595,8 +588,10 @@ function handleCollisions(object){
         next = 1;
     }
     function move_up() {
-        if (hook_group.position.y <= 18 && next == 1) {
+        if (next == 1) {
             delta = clock.getDelta();
+        }
+        if (hook_group.position.y <= 18 && next == 1 && delta <= 0.5) {
             hook_cable.position.y += 0.25*delta*20;
             hook_cable.scale.y -= 0.025*delta*20;
             hook_group.position.y += 0.5*delta*20;
@@ -627,8 +622,10 @@ function handleCollisions(object){
         
     }
     function move_side() {
-        if (trolley_group.position.x < 0 && next == 3) {
+        if (next == 3) {
             delta = clock.getDelta();
+        }
+        if (trolley_group.position.x < 0 && next == 3 && delta <= 0.5) {
             trolley_group.position.x += 0.5*delta*20;
             mobileCamera.position.x += 0.5*delta*20;
         } else if (trolley_group.position.x >= 0 && next == 3) {
@@ -636,8 +633,10 @@ function handleCollisions(object){
         }
     }
     function move_down() {
-        if (hook_group.position.y >= -23 && next == 4) {
+        if (next == 4) {
             delta = clock.getDelta();
+        }
+        if (hook_group.position.y >= -23 && next == 4 && delta <= 0.5) {
             hook_cable.position.y -= 0.25*delta*20;
             hook_cable.scale.y += 0.025*delta*20;
             hook_group.position.y -= 0.5*delta*20;
