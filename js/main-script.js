@@ -664,13 +664,6 @@ function handleCollisions(object){
     move_down();
     move_end();
     
-
-    //have the animation
-
-    //then once it's stopped move the object down a bit so it falls inside the container
-    //then scene.remove the object
-
-
 }
 
 /////////////
